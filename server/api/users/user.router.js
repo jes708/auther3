@@ -33,6 +33,10 @@ router.post('/', function (req, res, next) {
 });
 
 router.get('/:id', function (req, res, next) {
+  // User.findById(req.session.passport.user)
+  // .then(function(user){
+  //   console.log(user.isAdmin)
+  // })
   req.requestedUser.reload({include: [Story]})
   .then(function (requestedUser) {
     res.json(requestedUser);
@@ -41,19 +45,36 @@ router.get('/:id', function (req, res, next) {
 });
 
 router.put('/:id', function (req, res, next) {
-  req.requestedUser.update(req.body)
-  .then(function (user) {
-    res.json(user);
-  })
-  .catch(next);
+  User.findById(req.session.passport.user)
+  .then(function(user){
+    if ((req.requestedUser.id === user.id) || user.isAdmin) {
+        req.requestedUser.update(req.body)
+        .then(function (user) {
+          res.json(user);
+        })
+        .catch(next);
+    } 
+    else {
+      res.redirect('/')
+    }
+  });
 });
 
 router.delete('/:id', function (req, res, next) {
-  req.requestedUser.destroy()
-  .then(function () {
-    res.status(204).end();
+  User.findById(req.session.passport.user)
+  .then(function(user){
+    if ((req.requestedUser.id === user.id) || user.isAdmin) {
+        req.requestedUser.destroy()
+        .then(function () {
+          res.status(204).end();
+        })
+        .catch(next);
+    } 
+    else {
+      res.redirect('/')
+    }
   })
-  .catch(next);
+
 });
 
 module.exports = router;
